@@ -1,6 +1,7 @@
 ##### wgbs_pipeline_v1.0.sh #####
 
 #!/bin/bash
+
 set -e 
 set -u
 
@@ -280,38 +281,44 @@ mv 4_bismark_alignment/*.bed* 5_output_files
 echo "Providing pipeline metrics to wgbs pipeline logfile..."
 
 # get all relevant numbers for final log summary
+# need to change file extensions as appropriate for version of bismark being used
+
 bismark_version=$(bismark --version | grep "Bismark Version:" | cut -d":" -f2 | tr -d ' ')
 samtools_version=$(samtools 3>&1 1>&2 2>&3 | grep "Version:" | cut -d' ' -f2 | tr -d ' ')
 
-map_ef=$(grep 'Mapping efficiency:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-unique_aln=$(grep 'Number of alignments with a unique best hit from the different alignments:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-no_aln=$(grep 'Sequences with no alignments under any condition:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-multi_aln=$(grep 'Sequences did not map uniquely:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-cpg_per=$(grep 'C methylated in CpG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-chg_per=$(grep 'C methylated in CHG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-chh_per=$(grep 'C methylated in CHH context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+map_ef=$(grep 'Mapping efficiency:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*SE_report.txt | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+unique_aln=$(grep 'Number of alignments with a unique best hit from the different alignments:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+no_aln=$(grep 'Sequences with no alignments under any condition:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+multi_aln=$(grep 'Sequences did not map uniquely:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+cpg_per=$(grep 'C methylated in CpG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+chg_per=$(grep 'C methylated in CHG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+chh_per=$(grep 'C methylated in CHH context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
 
 if [[ ${fq} == *gz* ]];then
 	raw_reads=$(zcat 0_rawfastq/*.gz | wc -l)
-	raw_reads=$(($raw_reads / 4 ));fi
+	raw_reads=$(($raw_reads / 4 ));
+fi
 
 if [[ ${fq} != *gz* ]];then
 	raw_reads=$(wc -l < 0_rawfastq/$fq_file)
-	raw_reads=$(($raw_reads / 4 ));fi
+	raw_reads=$(($raw_reads / 4 ));
+fi
 
 if [[ ${fq} == *gz* ]];then
 	flt_reads=$(zcat 2_trimgalore/*.gz | wc -l)
-	flt_reads=$(($flt_reads / 4));fi
+	flt_reads=$(($flt_reads / 4));
+fi
 
 if [[ ${fq} != *gz* ]];then
 	flt_reads=$(wc -l < 2_trimgalore/${fq%%.fastq*}_trimmed.fq*)
-	flt_reads=$(($flt_reads / 4));fi
+	flt_reads=$(($flt_reads / 4));
 fi
 
-
 # add it to the full pipeline logfile
-printf "${dow}\t${fq_file}\t${fileID}\t${genome_path##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n"
-printf "${dow}\t${fq_file}\t${fileID}\t${genome_path##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n" >> $HOME/wgbs_se_pipeline_analysis_record.log
+
+printf "${dow}\t${fq}\t${fileID}\t${bisgenome##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n"
+
+printf "${dow}\t${fq}\t${fileID}\t${bisgenome##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n" >> $HOME/wgbs_se_pipeline_analysis_record.log
 
 
 # compress sam and unsorted bam files
@@ -329,7 +336,7 @@ fi
 # SINGLE END EPIGENOME
 ######################################
 
-All this does differently is trip the first 6bp from the fastq reads as per epicentre protocol to eliminate issues of random hexamer binding... (difference is in the TrimGalore! command)
+#All this does differently is trip the first 6bp from the fastq reads as per epicentre protocol to eliminate issues of random hexamer binding... (difference is in the TrimGalore! command)
 
 
 ### preparation ###
@@ -416,7 +423,7 @@ mkdir 2_trimgalore
 cd 2_trimgalore
 
 # run trim_galore command to perform trimming of input fastq file
-trim_galore --clip_R1 6 ../$fq_file 2>&1 | tee -a ../${fileID}_${dow}.log
+trim_galore --clip_R1 6 ../${fq} 2>&1 | tee -a ../${fileID}_${dow}.log
 
 # move back to sample directory
 cd ../
@@ -573,43 +580,52 @@ mv 4_bismark_alignment/*.bed* 5_output_files
 #mv 4_bismark_alignment/CHH*.wig 5_output_files/${fileID}_CHH_100bp.wig
 
 
+
+
 ### gather pipeline metrics ###
 
 echo "Providing pipeline metrics to wgbs pipeline logfile..."
 
 # get all relevant numbers for final log summary
+# need to change file extensions as appropriate for version of bismark being used
+
 bismark_version=$(bismark --version | grep "Bismark Version:" | cut -d":" -f2 | tr -d ' ')
 samtools_version=$(samtools 3>&1 1>&2 2>&3 | grep "Version:" | cut -d' ' -f2 | tr -d ' ')
 
-map_ef=$(grep 'Mapping efficiency:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-unique_aln=$(grep 'Number of alignments with a unique best hit from the different alignments:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-no_aln=$(grep 'Sequences with no alignments under any condition:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-multi_aln=$(grep 'Sequences did not map uniquely:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t')
-cpg_per=$(grep 'C methylated in CpG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-chg_per=$(grep 'C methylated in CHG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
-chh_per=$(grep 'C methylated in CHH context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*_bismark_SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+map_ef=$(grep 'Mapping efficiency:' 4_bismark_alignment/${fq%%.fastq*}_trimmed.fq*SE_report.txt | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+unique_aln=$(grep 'Number of alignments with a unique best hit from the different alignments:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+no_aln=$(grep 'Sequences with no alignments under any condition:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+multi_aln=$(grep 'Sequences did not map uniquely:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t')
+cpg_per=$(grep 'C methylated in CpG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+chg_per=$(grep 'C methylated in CHG context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
+chh_per=$(grep 'C methylated in CHH context:' 4_bismark_alignment/${fq%%.fastq*}_trimmed*SE_report.txt  | cut -d: -f2 | tr -d '\t' | cut -d'%' -f1)
 
 if [[ ${fq} == *gz* ]];then
 	raw_reads=$(zcat 0_rawfastq/*.gz | wc -l)
-	raw_reads=$(($raw_reads / 4 ));fi
+	raw_reads=$(($raw_reads / 4 ));
+fi
 
 if [[ ${fq} != *gz* ]];then
 	raw_reads=$(wc -l < 0_rawfastq/$fq_file)
-	raw_reads=$(($raw_reads / 4 ));fi
+	raw_reads=$(($raw_reads / 4 ));
+fi
 
 if [[ ${fq} == *gz* ]];then
 	flt_reads=$(zcat 2_trimgalore/*.gz | wc -l)
-	flt_reads=$(($flt_reads / 4));fi
+	flt_reads=$(($flt_reads / 4));
+fi
 
 if [[ ${fq} != *gz* ]];then
 	flt_reads=$(wc -l < 2_trimgalore/${fq%%.fastq*}_trimmed.fq*)
-	flt_reads=$(($flt_reads / 4));fi
+	flt_reads=$(($flt_reads / 4));
 fi
 
 
 # add it to the full pipeline logfile
-printf "${dow}\t${fq_file}\t${fileID}\t${genome_path##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n"
-printf "${dow}\t${fq_file}\t${fileID}\t${genome_path##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n" >> $HOME/wgbs_se_pipeline_analysis_record.log
+
+printf "${dow}\t${fq}\t${fileID}\t${bisgenome##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n"
+
+printf "${dow}\t${fq}\t${fileID}\t${bisgenome##../}\t${type:1}\t${bismark_version}\t${samtools_version}\t${raw_reads}\t${flt_reads}\t${map_ef}\t${unique_aln}\t${no_aln}\t${multi_aln}\t${cpg_per}\t${chg_per}\t${chh_per}\n" >> $HOME/wgbs_se_pipeline_analysis_record.log
 
 
 # compress sam and unsorted bam files
@@ -767,6 +783,7 @@ find -name "*.sam" | xargs pigz
 find -name "*pe.bam" | xargs rm
 
 fi
+
 
 ######################################
 # PAIRED END PBAT epignome
@@ -969,16 +986,3 @@ echo "####################"
 find -name "*.sam" | xargs pigz
 find -name "*_merged.txt" | xargs pigz
 fi
-
-
-#!/bin/bash
-set -u
-# Based on SRE Bisulfite sequence analysis pipeline
-###################
-# This script it designed to take a single end fastq file and process it through the 
-# bismark aligner call methylated cytosines, and develop per-c bed files and 100bp 
-# window wig files for CpG, CHG, and CHH methylation levels
-#
-# Genome indexing
-# Bowtie: bismark_genome_preparation /path/to/genome
-# Bowtie2: bismark_genome_preparation --bowtie2 /path/to/genome
