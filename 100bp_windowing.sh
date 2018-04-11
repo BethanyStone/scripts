@@ -104,13 +104,13 @@ echo "Tidying window file..."
 #	OFS = output field separator ('\t')
 #	$6 = total # methylation sites in reads underlying window (count_methylated + count_unmethylated)
 #	$7 = percentage of methylated sites (methylated/total sites * 100)
-awk -F '\t' '{$6=$4+$5;} {$7=$4/$6*100;} {print $1,$2,$3,$4,$5,$7,$6}' OFS='\t' ${bed_file}.merge > ${bed_file}_100bp.bed
+awk -F '\t' '{$6=$4+$5;} {$7=$4/$6*100;} {print $1,$2,$3,$4,$5,$7,$6}' OFS='\t' ${bed_file}.merge > ${bed_file::-22}_100bp.bed
 
 # remove merged bed file
 rm ${bed_file}.merge
 
 # gzip 100pb window output file
-if [[ ${bed_file}_100bp.bed != *gz ]];then
-	gzip ${bed_file}_100bp.bed;
+if [[ ${bed_file::-22}_100bp.bed != *gz ]];then
+	gzip ${bed_file::-22}_100bp.bed;
 fi
 
