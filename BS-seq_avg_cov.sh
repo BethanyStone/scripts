@@ -12,5 +12,5 @@ set -u
 # samtools depth command calculates read depth at each position (or region) of genome
 # 	this is then averaged across the entire genome
 
-samtools depth  *fq_bismark.sorted.sam  |  awk '{sum+=$3} END { print "Average = ",sum/NR}'
+samtools depth  *fq_bismark.bam.sorted  |  awk '{sum+=$3} END { print "Average = ",sum/NR}'
 
