@@ -26,7 +26,7 @@ cov_file=$1
 
 ### unzip cov_file
 if [[ ${cov_file} == *gz ]];then
-	gunzup ${cov_file}
+	gunzip ${cov_file}
 fi
 
 
