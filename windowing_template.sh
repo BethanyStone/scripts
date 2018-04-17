@@ -44,4 +44,5 @@ cut -f1,2 TAIR10.fa.fai > TAIR10.chrom.sizes
 # change file names as needed
 # ouput is a bed file with columns as follows:
 #	chromsome	window_start	window_stop
-bedtools makewindows -g TAIR10.chrom.sizes -w 99 -s 100 > TAIR10>100bp_windows.bed
+bedtools makewindows -g TAIR10.chrom.sizes -w 99 -s 100 > TAIR10_100bp_windows.bed
+
