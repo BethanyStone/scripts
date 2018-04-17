@@ -13,7 +13,7 @@
 #	chromosome	Start	Stop	%methylated	count_unmethylated	count_methylated
 # windowing template file contains columsn as follows:
 #	chromosome	window_start	window_stop
-
+# script adapted from https://www.biostars.org/p/70577/
 
 ### usage
 if [ "$#" -ne 2 ]; then
@@ -75,18 +75,24 @@ awk -F '\t' '{print $1,$2,$3,$8,$9}' OFS='\t' ${bed_file}.int.sorted > ${bed_fil
 rm ${bed_file}.int.sorted
 
 # summarise methylation across windows
-# bedtools merge combines overlapping features (i.e windows) into a single feature spanning all of the combined features
-# since windows are non-overlapping, methylation will be summarised for each window
-#	-i = input file
-#	-c = columns to be summarised
+# bedtools groupby computes summary statistics on a column (-c) based on appropriate grouping column (-g)
+# need bed file to be sorted, as when a change in grouping columns are detected a new summary is started
+#	-i = input bed file
+#	-g = column that will be used to group the input
 #	-o = action to be applied to columns being summarised
-bedtools merge -i ${bed_file}.int.sorted.sub -c 4,5 -o sum,sum > ${bed_file}.merge
+bedtools groupby -i ${bed_file}.int.sorted.sub -g 1,2,3 -c 4,5 -o sum > ${bed_file}.grouped
 
-# remove subsetted sorted intesect bed file
+# cant perform multiple actions in one groupby call, so need to compute number of methylation sites (just count of lines in bed file) separately...
+bedtools groupby -i ${bed_file}.int.sorted.sub -g 1,2,3 -c 4 -o count > ${bed_file}.grouped2
+
+bedtools map -a ${bed_file}.grouped -b ${bed_file}.grouped2 -c 4 > ${bed_file}.grouped.out
+
+# remove subsetted sorted intesect bed file and intermediate grouped files
 rm ${bed_file}.int.sorted.sub
+rm ${bed_file}.grouped
+rm ${bed_file}.grouped2
 
-
-### format merged bed file
+### format grouped.out bed file
 
 echo "Tidying window file..."
 
@@ -96,18 +102,17 @@ echo "Tidying window file..."
 #	window stop
 #	count of unmethylated sites across window (from reads underlying window)
 #	count of methylated sites across window (from reads underlying window)
-#	average methylation of window (calculated as $ of all methylation sites that are methylated in underlying reads)
-#	ideally, number of methylation sites in window (but haven't worked out how to calculate this properly yet...)
+#	weighted average methylation of window (calculated as % of all methylation sites that are methylated in underlying reads)
+#	number of methylation sites in window
 
 # gather info for columns as above
 #	-F = field separator ('\t' = tab-delimited)
 #	OFS = output field separator ('\t')
-#	$6 = total # methylation sites in reads underlying window (count_methylated + count_unmethylated)
-#	$7 = percentage of methylated sites (methylated/total sites * 100)
-awk -F '\t' '{$6=$4+$5;} {$7=$4/$6*100;} {print $1,$2,$3,$4,$5,$7,$6}' OFS='\t' ${bed_file}.merge > ${bed_file::-22}_100bp.bed
+#	$7 = percentage of methylated sites ((methylated/methylated + unmethylated)* 100)
+awk -F '\t' '{$7=($4/($4+$5))*100;} {print $1,$2,$3,$4,$5,$7,$6}' OFS='\t' ${bed_file}.grouped.out > ${bed_file::-22}_100bp.bed
 
-# remove merged bed file
-rm ${bed_file}.merge
+# remove grouped.out bed file
+rm ${bed_file}.grouped.out
 
 # gzip 100pb window output file
 if [[ ${bed_file::-22}_100bp.bed != *gz ]];then
