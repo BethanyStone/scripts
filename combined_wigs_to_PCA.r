@@ -4,22 +4,22 @@
 
 options(echo=T)
 
-files=dir(pattern=paste0("_100bp.wig"))
-data <- read.delim(files[1], head=F, skip=1)
-data <- data[,1:4]
+files=dir(pattern=paste0("_100bp.bed"))
+data <- read.delim(files[1], head=F)
+data <- data[,c(1,2,3,6)]
 
 colnames(data)=c('V1','V2','V3',paste(files[1]))
 for(i in 2:length(files)){
 file=read.delim(files[i],head=F,skip=1)
-file=file[,1:4]
+file=file[,c(1,2,3,6)]
 colnames(file)=c('V1','V2','V3',paste(files[i]))
 temp=merge(data,file,by=c('V1','V2','V3'),all=T)
 data=temp
 }
 
 test=data[complete.cases(data),]
-test=test[test$V1 != 'Mt',]
-test=test[test$V1 != 'Pt',]
+test=test[test$V1 != 'chloroplast',]
+test=test[test$V1 != 'mitochondria',]
 
 # Correlation matrix
 a <- cor(as.matrix(test[,4:length(test)]))
