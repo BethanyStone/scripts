@@ -985,4 +985,5 @@ echo "####################"
 #compress sam and unsorted bam files
 find -name "*.sam" | xargs pigz
 find -name "*_merged.txt" | xargs pigz
+
 fi
