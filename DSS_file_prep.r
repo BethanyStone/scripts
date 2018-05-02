@@ -11,7 +11,7 @@ print(args)
 context = args[1]
 
 ## get cov files 
-files=dir(pattern=paste0(context,".bed.gz.bismark.cov"))
+files=dir(pattern=paste0(context,".bed.bismark.cov"))
 
 ## get total and met counts for each sample in given context and write out as separate files
 for(i in 1:length(files)){
