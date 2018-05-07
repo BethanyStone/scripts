@@ -1,0 +1,17 @@
+RID_to_entrezID_conversion.sh #####
+
+# this script generates a list of entrez gene IDs and their corresponding TAIR gene ID
+# need to run manually
+# help from https://www.biostars.org/p/9154/ 
+
+
+### get list of gene data containing from NCBI (contains both entrez and TAIR IDs) - if needed...
+ftp://ftp.ncbi.nih.gov/gene/DATA/GENE_INFO/Plants/Arabidopsis_thaliana.gene_info.gz
+
+# gunzip file (if needed)
+gunzip Arabidopsis_thaliana.gene_info.gz 
+
+
+### subset to columns containing geneIDs 
+# NCBI IDs in second column (GeneID); TAIR IDs in fourth column (LocusTag)
+awk -F '\t' '{print $2,$4}' Arabidopsis_thaliana.gene_info > Ath_NCBI_TAIR_IDs
