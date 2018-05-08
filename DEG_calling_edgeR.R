@@ -95,6 +95,31 @@ dev.off()
 DGEs$counts <- DGEs$counts[-rRNA_contam, ]
 
 
+### remove chloroplastic and mitochondrial transcript contamination
+# these should not be present in mRNA-seq data (as the plastids lack capacity for polyadenylation) and so are considered as contamination
+
+# get list of genesIDs in count table (after rRNA removal)
+geneIDs <- as.character(rownames(DGEs$counts))
+
+# get annotation file containing mitochondrial and chloroplastic geneIDs
+anno=read.delim("/home/bethanys/annotations/Araport11_genes.sorted.bed", head=F)
+
+# subset annotation to genes from chloroplast and mitochondria
+p_genes=subset(anno, anno$V1 == "ChrM" | anno$V1 == "ChrC")
+
+# get list of plastid genes as character vector
+p_genes=as.character(p_genes$V4)
+
+# match these to geneID list to get vector numbers of counts to be removed
+plastid_contam=match(p_genes, geneIDs)
+
+# remove NA values
+plastid_contam=na.omit(plastid_contam)
+
+# remove plastid reads from library
+DGEs$counts <- DGEs$counts[-plastid_contam, ]
+
+
 ### remove lowly expressed genes 
 # genes with low counts across libraries give little evidence for differential expression (i.e. a gene must be expressed at some min level for it to be likely to be translated/be biologically relevant)
 # pronounced discreteness of these genes also interferes with statistics used for DGE analysis
