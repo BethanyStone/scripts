@@ -1,4 +1,4 @@
-_GO_analysis #####
+##### GO_analysis_topGO.R #####
 
 # quick script to perform simple gene ontology analysis for gene sets of interest (i.e. DEGs or DAGs)
 # don't fully understand workings of topGO, but following code based on this handy post: https://www.biostars.org/p/250927/
